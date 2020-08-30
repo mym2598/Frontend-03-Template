@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title></title>
+	<style>
+		p:first-letter
+		{
+			background-color:yellow;
+		}
+		#id.class{
+			color: red;
+		}
+	</style>
+</head>
+
+<body>
+	<div>
+		<div id="id" class="class">h3</div>
+	</div>
+</body>
+</html>
+<script>
+
+var node = document.getElementsByTagName('body')
+/*
+* 以body为初始值开始遍历
+* */
+function match(selector, element) {
+  const styles = selector.split(' ')
+  for (let i = 0;i<styles.length;i++){
+    find(matchClass(styles[i]),node)
+  }
+  console.log(node)
+}
+function matchClass(selector){
+  // 默认只有div.class#id这种形式
+  // 入字符串 返数组
+  let selectorArr = selector.split('.')
+  for (let i = 1;i<selectorArr.length;i++){
+    selectorArr[i] = `.${selectorArr[i]}`
+  }
+  return matchId(selectorArr)
+}
+function matchId(selectorArr){
+  selectorArr.forEach((item, index)=>{
+    if (item.includes('#')){
+      selectorArr[index] = item.split('#')
+      for (let i = 1;i<selectorArr[index].length;i++){
+        selectorArr[index][i] = `#${ selectorArr[index][i]}`
+      }
+    }
+  })
+  return selectorArr.flat()
+}
+function find(arr,parents){
+  /*
+  *	这里区分 arr长度 1个条件和多个条件
+  * 1个条件的 必然符合 多个条件的 要校验全部符合
+  * 多个条件是 遍历 默认qualified为ture 任何条件不符合则为fasle
+  * 加入node 进行下一次的遍历
+  * 最后node为空数组则无符合条件
+  * */
+    console.log(arr,parents)
+    if (arr.length === 1){
+      let tagNameElements = []
+      let classNmaeElements = []
+      let idElements = []
+      Array.from(parents).forEach(elenode=>{
+        arr.forEach(item=>{
+          if (item.includes('.')){
+            classNmaeElements.push(Array.from(elenode.getElementsByClassName(item.substr(1))).filter(n=>{return n.parentNode === elenode }))
+          }else if (item.includes('#')){
+            idElements.push(Array.from([ document.getElementById(item.substr(1)) ]).filter(n=>{ return n.parentNode === elenode }))
+          }else if (item === ''){
+
+          }else{
+            tagNameElements.push(Array.from(elenode.getElementsByTagName(item)).filter(n=>{ return n.parentNode === elenode }))
+          }
+        })
+      })
+      node = [...tagNameElements,...classNmaeElements,...idElements].flat()
+	}else{
+      let tagNameElements = []
+      let classNmaeElements = []
+      let idElements = []
+      node = []
+      Array.from(parents).forEach(elenode=>{
+        let qualified = true
+        arr.forEach(item=>{
+          if (item.includes('.')){
+            if (Array.from(elenode.getElementsByClassName(item.substr(1))).filter(n=>{return n.parentNode === elenode }).length === 0 ){ qualified = false}
+            qualified && classNmaeElements.push(Array.from(elenode.getElementsByClassName(item.substr(1))).filter(n=>{return n.parentNode === elenode }))
+          }else if (item.includes('#')){
+            if (Array.from([ document.getElementById(item.substr(1)) ]).filter(n=>{ return n.parentNode === elenode }).length === 0  ){ qualified = false}
+            qualified && idElements.push(Array.from([ document.getElementById(item.substr(1)) ]).filter(n=>{ return n.parentNode === elenode }))
+          }else if (item === ''){
+
+          }else{
+            if (Array.from(elenode.getElementsByTagName(item)).filter(n=>{ return n.parentNode === elenode }).length === 0 ){ qualified = false}
+            qualified && tagNameElements.push(Array.from(elenode.getElementsByTagName(item)).filter(n=>{ return n.parentNode === elenode }))
+          }
+		  /*
+		  * 数组只能保存一个元素
+		  * 如果符合条件加入下个节点数组继续循环
+		  * 如果不符合 归零数组
+		  * */
+        })
+        if (qualified){
+         node.push( [...tagNameElements,...classNmaeElements,...idElements].flat()[0])
+        }else{
+		  tagNameElements = []
+          classNmaeElements = []
+		  idElements = []
+		}
+      })
+	}
+
+}
+match("div #id.class", document.getElementById("id"));
+</script>
