@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        .TicTacToe {
+            width: 306px;
+            height: 306px;
+            display: flex;
+            flex-wrap: wrap;
+            margin: 0 auto;
+        }
+
+        .cell {
+            width: 100px;
+            height: 100px;
+            display: inline-block;
+            background: darksalmon;
+            border: 1px solid #fff;
+            line-height: 100px;
+            vertical-align: center;
+            text-align: center;
+            font-size: 35px;
+            user-select: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div class="TicTacToe"></div>
+</body>
+
+<script>
+
+    let board = [
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0]
+        ],
+        color = 1;
+
+    // 根据数据渲染棋盘
+    function show() {
+        document.querySelector('.TicTacToe').innerHTML = ''
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                let cell = document.createElement('div');
+                cell.className = "cell"
+                cell.innerText = board[i][j] === 1 ? '⭕' : board[i][j] === 2 ? '❌' : '';
+                // 添加棋格的落子监听
+                cell.addEventListener('click', () => useMove(i, j))
+                document.querySelector('.TicTacToe').appendChild(cell);
+            }
+        }
+        toTie()
+    }
+
+    // 玩家落子 改变下颗棋子类型
+    function useMove(i, j) {
+        if (board[i][j]) return;
+        board[i][j] = color;
+        if (checkWin(board, color)) {
+            alert(`${color === 1 ? '⭕' : '❌'}方获胜`)
+            return
+        }
+        color = 3 - color;
+        // willWin(board, color);
+        if (willWin(board, color)) {
+            console.log(color === 1 ? '⭕' : '❌' + '将要获胜')
+        }
+
+        show()
+        computerMove()
+    }
+
+    // 电脑落子
+    function computerMove() {
+        let point = bestChoice(board, color).point
+        if (point) {
+            board[point[0]][point[1]] = color;
+            show();
+            if (checkWin(board, color)) {
+                alert(`${color === 1 ? '⭕' : '❌'}方获胜`)
+                return
+            }
+            color = 3 - color;
+        }
+    }
+
+    // 和棋检测
+    function toTie() {
+        let flag = true;
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                if (!board[i][j]) flag = false
+            }
+        }
+        if (flag) alert('和棋')
+    }
+
+    // 判断是否获胜
+    function checkWin(_board, _color) {
+        // 检测是否有横排连子
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                if (_board[i][j] !== _color) break;
+                if (j === 2) {
+                    return true
+                }
+
+            }
+        }
+        // 检测是否有竖排连子
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                if (_board[j][i] !== _color) break;
+                if (j === 2) {
+                    return true
+                }
+
+            }
+        }
+        // 检测是否有正斜排连子
+        for (let i = 0; i < 3; i++) {
+            if (_board[i][i] !== _color) break;
+            if (i === 2) {
+                return true;
+            }
+        }
+        // 检测是否有反斜排连子(花括号产生局部作用域)
+        {
+            let win = true;
+            for (let i = 0; i < 3; i++) {
+                if (_board[i][2 - i] !== _color) {
+                    win = false
+                }
+            }
+            if (win)
+                return true;
+        }
+
+        return false
+    }
+
+    // 判断哪方将要获胜
+    function willWin(_board, _color) {
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                if (_board[i][j]) continue;
+                let tmp = clone(_board);
+                tmp[i][j] = _color;
+                if (checkWin(tmp, _color)) {
+                    return [i, j]
+                }
+            }
+        }
+        return null
+    }
+
+    // 尝试找出最好落子点,也就是对于对方最糟糕的点
+    function bestChoice(_board, _color) {
+        let p, result = -2, point;
+        if (p = willWin(_board, _color)) {
+            return {
+                point: p,
+                result: 1
+            }
+        }
+        outer:for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                if (_board[i][j]) continue;
+                let tmp = clone(_board);
+                tmp[i][j] = _color;
+                // 找到对方最好的落子点结果x，-x就是我们的结果
+                let r = -bestChoice(tmp, 3 - _color).result;
+                if (r > result) {
+                    result = r;
+                    point = [i, j]
+                }
+                if (result === 1) break outer;
+            }
+        }
+        return {
+            point,
+            result: point ? result : 0
+        }
+    }
+
+    function clone(_board) {
+        // 一维数组对象的话可以用Object.create()方法克隆，生命周期小于下面方法
+        return JSON.parse(JSON.stringify(_board))
+    }
+
+    show()
+    // console.log(bestChoice(board, color))
+</script>
+</html>
